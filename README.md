@@ -50,16 +50,17 @@ Visit `http://127.0.0.1:8000/docs` for interactive API documentation.
 Doctors spend 2 hours on paperwork for every 1 hour with patients. This API automates clinical documentation by extracting structured data from free-text notes for use in hospital EHR systems, billing, and pharmacy orders.
 
 ## Project Structure
-
+```
 app/
-├── main.py          — app factory
-├── models.py        — pydantic models
-├── database.py      — database setup
-├── agent.py         — AI logic
-├── security.py      — JWT auth
+├── main.py        — app factory
+├── models.py      — pydantic models
+├── database.py    — database setup
+├── agent.py       — AI logic
+├── security.py    — JWT auth
 └── routers/
-├── auth.py      — signup and login endpoints
-└── notes.py     — note endpoints
+    ├── auth.py    — signup and login endpoints
+    └── notes.py   — note endpoints
+```
 
 
 ## Author
