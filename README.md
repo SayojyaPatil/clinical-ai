@@ -22,8 +22,10 @@ pip install -r requirements.txt
 ```
 
 Create a `.env` file in the project root:
+```
 OPENAI_API_KEY=your-openai-key
 SECRET_KEY=your-secret-key
+```
 
 Run the server:
 ```bash
