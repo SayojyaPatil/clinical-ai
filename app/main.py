@@ -15,7 +15,8 @@ app = FastAPI(
     title="Clinical AI",
     description="AI-powered clinical note summarizer",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    redirect_slashes=False  # ← add this
 )
 
 app.include_router(auth.router)
