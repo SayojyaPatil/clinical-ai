@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-ai
+pydantic-settings
+openai
+sqlalchemy
+aiosqlite
+greenlet
+python-jose[cryptography]
+bcrypt
+python-multipart
+python-dotenv
+httpx
