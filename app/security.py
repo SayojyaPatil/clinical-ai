@@ -2,9 +2,13 @@ from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 import bcrypt
 import os
 from dotenv import load_dotenv
+
+from app.database import get_db, UserRecord
 
 load_dotenv()
 
@@ -33,12 +37,32 @@ def create_token(username: str) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> str:
+    credentials_error = HTTPException(
+        status_code=401,
+        detail="Invalid or expired credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
-        if username is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return username
+
+        if not isinstance(username, str) or not username:
+            raise credentials_error
+
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise credentials_error
+
+    result = await db.execute(
+        select(UserRecord).where(UserRecord.username == username)
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise credentials_error
+
+    return user.username

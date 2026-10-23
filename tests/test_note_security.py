@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import NullPool
 
 from app.main import app
-from app.database import Base, get_db
+from app.database import Base, UserRecord, get_db
 from app.security import create_token
 from app.routers import notes
 
@@ -31,6 +31,19 @@ def client(tmp_path, monkeypatch):
     async def setup():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+
+        async with session_factory() as session:
+            session.add_all([
+                UserRecord(
+                    username="user_a",
+                    hashed_password="synthetic-test-hash",
+                ),
+                UserRecord(
+                    username="user_b",
+                    hashed_password="synthetic-test-hash",
+                ),
+            ])
+            await session.commit()
 
     asyncio.run(setup())
 
@@ -177,3 +190,12 @@ def test_image_note_is_owned_by_creator(client):
         f"/notes/{note_id}",
         headers=headers("user_b"),
     ).status_code == 404
+
+
+def test_token_for_nonexistent_user_is_rejected(client):
+    response = client.get(
+        "/notes",
+        headers=headers("deleted_user"),
+    )
+
+    assert response.status_code == 401
