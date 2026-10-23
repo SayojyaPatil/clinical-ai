@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from app.image_validation import validate_image
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db, get_all_notes , NoteRecord
@@ -49,11 +50,7 @@ async def analyze_from_image(
     db: AsyncSession = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    allowed_types = ["image/jpeg", "image/png", "image/webp"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Only JPEG, PNG or WebP images allowed")
-
-    image_bytes = await file.read()
+    image_bytes = await validate_image(file)
     result: ClinicalResult = await analyze_image(image_bytes, file.content_type)
     warning = get_warning(result.confidence)
 

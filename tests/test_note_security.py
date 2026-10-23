@@ -1,6 +1,8 @@
 
 import asyncio
 from types import SimpleNamespace
+import io
+from PIL import Image
 
 import pytest
 from fastapi.testclient import TestClient
@@ -85,6 +87,11 @@ def headers(username):
         "Authorization": f"Bearer {create_token(username)}"
     }
 
+
+def valid_png():
+    buffer = io.BytesIO()
+    Image.new("RGB", (10, 10)).save(buffer, format="PNG")
+    return buffer.getvalue()
 
 def create_note(client, username, patient_id="SYN-001"):
     return client.post(
@@ -171,7 +178,7 @@ def test_image_note_is_owned_by_creator(client):
         files={
             "file": (
                 "synthetic.png",
-                b"mocked-image-content",
+                valid_png(),
                 "image/png",
             )
         },
