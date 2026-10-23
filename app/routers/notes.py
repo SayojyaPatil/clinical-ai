@@ -7,16 +7,29 @@ from app.models import NoteRequest, NoteResponse
 from app.agent import analyze_note, analyze_image, ClinicalResult
 from app.security import get_current_user
 
+from openai import APIError, APITimeoutError
+from pydantic import ValidationError
+
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 
-def get_warning(confidence: float) -> str | None:
+def get_warning(confidence: float) -> str:
     if confidence < 0.5:
-        return "Low confidence — please review manually before use"
+        return "Low AI confidence. Clinical review required before use."
     if confidence < 0.75:
-        return "Moderate confidence — verify key fields with original note"
-    return None
+        return "Moderate AI confidence. Verify all extracted information with the original note."
 
+    return "AI-generated extraction. Clinical review required before use."
+
+
+async def run_ai_analysis(operation):
+    try:
+        return await operation()
+    except (APIError, APITimeoutError, ValidationError, ValueError):
+        raise HTTPException(
+            status_code=502,
+            detail="AI analysis could not be completed. Please try again.",
+        )
 
 @router.post("/analyze-text", response_model=NoteResponse)
 async def analyze(
@@ -24,7 +37,9 @@ async def analyze(
     db: AsyncSession = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    result: ClinicalResult = await analyze_note(request.note_text)
+    result: ClinicalResult = await run_ai_analysis(
+        lambda: analyze_note(request.note_text)
+    )
     warning = get_warning(result.confidence)
 
     record = NoteRecord(
@@ -51,7 +66,9 @@ async def analyze_from_image(
     current_user: str = Depends(get_current_user)
 ):
     image_bytes = await validate_image(file)
-    result: ClinicalResult = await analyze_image(image_bytes, file.content_type)
+    result: ClinicalResult = await run_ai_analysis(
+        lambda: analyze_image(image_bytes, file.content_type)
+    )
     warning = get_warning(result.confidence)
 
     record = NoteRecord(
