@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy import select
 from app.database import get_db, get_all_notes , NoteRecord
 from app.models import NoteRequest, NoteResponse
 from app.agent import analyze_note, analyze_image, ClinicalResult
@@ -27,6 +27,7 @@ async def analyze(
     warning = get_warning(result.confidence)
 
     record = NoteRecord(
+        owner_username=current_user,
         patient_id=request.patient_id,
         note_text=request.note_text,
         diagnoses=", ".join(result.diagnoses),
@@ -58,6 +59,7 @@ async def analyze_from_image(
 
     record = NoteRecord(
         patient_id=patient_id,
+        owner_username=current_user,
         note_text=f"[Image upload] {file.filename}",
         diagnoses=", ".join(result.diagnoses),
         medications=", ".join(result.medications),
@@ -77,7 +79,7 @@ async def list_notes(
     current_user: str = Depends(get_current_user),
     patient_id: str | None = None
 ):
-    records = await get_all_notes(db, patient_id)
+    records = await get_all_notes(db, current_user, patient_id)
     return records
 
 
@@ -87,7 +89,19 @@ async def get_note(
     db: AsyncSession = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    record = await db.get(NoteRecord, note_id)
+    result = await db.execute(
+        select(NoteRecord).where(
+            NoteRecord.id == note_id,
+            NoteRecord.owner_username == current_user
+        )
+    )
+
+    record = result.scalar_one_or_none()
+
     if record is None:
-        raise HTTPException(status_code=404, detail="Note not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Note not found"
+        )
+
     return record

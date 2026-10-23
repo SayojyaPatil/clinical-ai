@@ -16,6 +16,7 @@ class NoteRecord(Base):
     __tablename__ = "notes"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    owner_username = Column(String, nullable=True, index=True)
     patient_id = Column(String, nullable=False)
     note_text = Column(Text, nullable=False)
     diagnoses = Column(Text)
@@ -45,11 +46,20 @@ async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
 
-async def get_all_notes(session: AsyncSession, patient_id: str | None = None) -> list[NoteRecord]:
-    query = select(NoteRecord).order_by(NoteRecord.created_at.desc())
-    
+async def get_all_notes(
+    session: AsyncSession,
+    owner_username: str,
+    patient_id: str | None = None
+) -> list[NoteRecord]:
+
+    query = (
+        select(NoteRecord)
+        .where(NoteRecord.owner_username == owner_username)
+        .order_by(NoteRecord.created_at.desc())
+    )
+
     if patient_id:
         query = query.where(NoteRecord.patient_id == patient_id)
-    
+
     result = await session.execute(query)
     return result.scalars().all()
