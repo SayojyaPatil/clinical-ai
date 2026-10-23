@@ -87,8 +87,14 @@ All extracted information requires qualified human review.
 """
 
 
+MODEL_NAME = "gpt-4o"
+# Bump this version when SYSTEM_PROMPT changes.
+PROMPT_VERSION = "clinical-extraction-v1"
+EXTRACTION_SCHEMA_VERSION = 1
+
+
 agent = Agent(
-    model=OpenAIChatModel("gpt-4o"),
+    model=OpenAIChatModel(MODEL_NAME),
     output_type=ClinicalResult,
     system_prompt=SYSTEM_PROMPT,
 )
@@ -111,7 +117,7 @@ async def analyze_image(
 
     async with AsyncOpenAI() as client:
         response = await client.chat.completions.parse(
-            model="gpt-4o",
+            model=MODEL_NAME,
             response_format=ClinicalResult,
             messages=[
                 {

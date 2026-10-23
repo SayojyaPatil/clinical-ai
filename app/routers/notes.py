@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db, get_all_notes , NoteRecord
 from app.models import NoteRequest, NoteResponse
-from app.agent import analyze_note, analyze_image, ClinicalResult
+from app.agent import (analyze_note, analyze_image, ClinicalResult, MODEL_NAME,
+                       PROMPT_VERSION, EXTRACTION_SCHEMA_VERSION)
+from app.source_storage import persist_note
 from app.security import get_current_user
 
 from openai import APIError, APITimeoutError
@@ -24,7 +26,7 @@ def get_warning(confidence: float) -> str:
 
 async def run_ai_analysis(operation):
     try:
-        return await operation()
+        return ClinicalResult.model_validate(await operation(), from_attributes=True)
     except (APIError, APITimeoutError, ValidationError, ValueError):
         raise HTTPException(
             status_code=502,
@@ -52,9 +54,12 @@ async def analyze(
         urgency=result.urgency,
         confidence=result.confidence,
         warning=warning,
+        ai_result_json=result.model_dump(mode="json"),
+        model_name=MODEL_NAME,
+        prompt_version=PROMPT_VERSION,
+        extraction_schema_version=EXTRACTION_SCHEMA_VERSION,
     )
-    db.add(record)
-    await db.commit()
+    await persist_note(db, record)
     return record
 
 
@@ -81,9 +86,13 @@ async def analyze_from_image(
         urgency=result.urgency,
         confidence=result.confidence,
         warning=warning,
+        ai_result_json=result.model_dump(mode="json"),
+        model_name=MODEL_NAME,
+        prompt_version=PROMPT_VERSION,
+        extraction_schema_version=EXTRACTION_SCHEMA_VERSION,
     )
-    db.add(record)
-    await db.commit()
+    await persist_note(db, record, image_bytes=image_bytes,
+                       filename=file.filename, mime_type=file.content_type)
     return record
 
 

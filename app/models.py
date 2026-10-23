@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 
 class NoteRequest(BaseModel):
@@ -30,3 +30,31 @@ class UserCreate(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+
+
+class AIExtractionSnapshot(BaseModel):
+    diagnoses: list[str]
+    medications: list[str]
+    follow_ups: list[str]
+    urgency: Literal["routine", "urgent", "emergent"]
+    confidence: float = Field(ge=0, le=1)
+
+
+class SourceResponse(BaseModel):
+    note_id: str
+    source_id: Optional[str] = None
+    kind: Literal["text", "image", "unknown"]
+    availability: Literal["available", "unavailable"]
+    provenance: Optional[Literal["submitted", "legacy_inferred"]] = None
+    original_filename: Optional[str] = None
+    mime_type: Optional[str] = None
+    byte_size: Optional[int] = None
+    sha256: Optional[str] = None
+    stored_at: Optional[datetime] = None
+    original_text: Optional[str] = None
+    unavailable_reason: Optional[str] = None
+    ai_result: Optional[AIExtractionSnapshot] = None
+    model_name: Optional[str] = None
+    prompt_version: Optional[str] = None
+    extraction_schema_version: Optional[int] = None
+    review_status: Optional[Literal["unreviewed", "draft", "approved"]] = None

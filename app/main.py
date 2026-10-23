@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
 from app.database import init_db
-from app.routers import auth, notes
+from app.routers import auth, notes, sources
 
 
 @asynccontextmanager
@@ -21,6 +21,7 @@ app = FastAPI(
 
 app.include_router(auth.router)
 app.include_router(notes.router)
+app.include_router(sources.router)
 
 
 @app.get("/")

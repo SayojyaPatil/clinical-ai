@@ -1,17 +1,35 @@
-.DS_Store
-.env
-.env.*
-venv/
-.venv/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 
-clinical_notes.db
-clinical_notes.db.backup
-*.db-shm
-*.db-wal
+# macOS
+.DS_Store
 
-.pytest_cache/
-.coverage
-htmlcov/
-test_*.db
+# Local database files and backups
+clinical_notes.db*
+backups/
+*.sqlite3
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/*.tsbuildinfo
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# macOS
+.DS_Store
+
+# Local database backups
+clinical_notes.db*
+backups/
+
+# Frontend generated files
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/*.tsbuildinfo

@@ -323,3 +323,23 @@ Clinical AI implements several backend security controls:
 ## Author
 
 **Sayojya Patil**
+
+## Document-review persistence foundation
+
+Stage 1 adds versioned SQLite migrations, private source-image persistence,
+structured AI snapshots, and review-state/revision/event storage while keeping
+existing API contracts unchanged. See [migration and recovery instructions](migrations/README.md).
+
+## Read-only document review (Stage 2)
+
+Authenticated owners can retrieve source metadata and original text with
+`GET /notes/{note_id}/source`, and preserved image bytes with
+`GET /notes/{note_id}/source/content`. Both endpoints enforce the same ownership
+checks as note retrieval. Image responses use the validated MIME type and
+`Cache-Control: private, no-store`; inaccessible notes return 404 and invalid
+credentials return 401. Historical missing images are explicitly unavailable.
+
+The React frontend opens a read-only Document Review view from Analysis History,
+with protected image previews, zoom/details, original text, and immutable AI
+fields. No editing, approval, or export endpoints are introduced. Stage 2 uses
+the Stage 1 schema unchanged and does not modify records when documents are viewed.

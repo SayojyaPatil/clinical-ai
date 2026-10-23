@@ -14,6 +14,7 @@ from sqlalchemy.pool import NullPool
 
 from app.main import app
 from app.database import Base, UserRecord, get_db
+from app.db_integrity import configure_sqlite_engine
 from app.security import create_token
 from app.routers import notes
 
@@ -26,6 +27,7 @@ def client(tmp_path, monkeypatch):
         f"sqlite+aiosqlite:///{db_path}",
         poolclass=NullPool,
     )
+    configure_sqlite_engine(engine)
     session_factory = async_sessionmaker(
         engine, expire_on_commit=False
     )

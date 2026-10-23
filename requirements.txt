@@ -13,3 +13,4 @@ python-multipart
 python-dotenv
 httpx
 Pillow
+alembic>=1.16,<2
